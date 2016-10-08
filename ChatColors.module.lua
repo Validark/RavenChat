@@ -3,24 +3,45 @@
 -- @author noliCAIKS
 
 local ChatColors = {
-	"Bright red";
-	"Bright blue";
-	"Earth green";
-	"Bright violet";
-	"Bright orange";
-	"Bright yellow";
-	"Light reddish violet";
-	"Brick yellow";
+	Color3.fromRGB(255, 119, 119); Color3.fromRGB(167, 214, 255);
+	Color3.fromRGB(96,  255, 162); Color3.fromRGB(233, 153, 255);
+	Color3.fromRGB(255, 201, 156); Color3.fromRGB(255, 240, 160);
+	Color3.fromRGB(255, 189, 230); Color3.fromRGB(227, 216, 197);
+
+	System = Color3.fromRGB(0, 215, 136);
+}
+
+local ModeratorColor = Color3.fromRGB(255, 223, 94)
+
+local Moderators = {
+	142762267
+}
+
+local CustomColors = {
+	[16826035] = Color3.fromRGB(255, 180, 252)
 }
 
 local byte = string.byte
-
 function ChatColors:__index(Player)
 	--- Gets a chat color and indexes it if one doesn't exist
 	if Player:IsA("Player") then
 		local userId, Name = Player.userId, Player.Name
-		local length = #Name
 
+		for id, Color in next, CustomColors do
+			if id == userId then
+				self[Player] = Color
+				return Color
+			end
+		end
+
+		for a = 1, #Moderators do
+			if Moderators[a] == userId then
+				self[Player] = ModeratorColor
+				return ModeratorColor
+			end
+		end
+
+		local length = #Name
 		for letter = 1, length do
 			local CharacterValue = byte(Name, letter)
 			local ReverseIndex
@@ -41,7 +62,8 @@ function ChatColors:__index(Player)
 	end
 end
 
-game:GetService("Players").PlayerRemoving:connect(function(Player)
+local Players = game:GetService("Players")
+Players.PlayerRemoving:connect(function(Player)
 	wait(10) -- Just chill to make sure that any of their messages have finished sending
 	ChatColors[Player] = nil
 end)

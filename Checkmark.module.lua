@@ -100,6 +100,24 @@ do
 			box1.Position = UDim2.new(0.5, 0, 0.5, 0)
 			SteppedConnection:disconnect()
 
+			--[[local elapsedTime = 0
+			local FadeTime = 1
+			SteppedConnection = Stepped:connect(function(step)
+				if elapsedTime < FadeTime then
+					elapsedTime = elapsedTime + step
+					local r = elapsedTime / FadeTime * 2
+					local ratio = r < 1 and .5 * r * r or -.5 * ((r - 1) * (r - 3) - 1)
+					box2.BackgroundTransparency = ratio
+					box1.BackgroundTransparency = ratio
+					box3.BackgroundTransparency = 1
+				else
+					box2:Destroy()
+					box1:Destroy()
+					box3:Destroy()
+					SteppedConnection:disconnect()
+				end
+			end)]]
+
 		end
 	end)
 end
