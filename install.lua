@@ -19,12 +19,12 @@ return function(WasHttpEnabled)
 	end
 
 	local ModuleScript = {
-		function new(Name, Parent)
+		new = function(Name, Parent)
 			local script = Instance.new("ModuleScript", Parent)
 			script.Name = Name
 			script.Source = HttpService:GetAsync(Modules[Name])
 			return script
-		end
+		end;
 	}
 
 	local ModuleFolder = GetFolder("Modules", ServerScriptService)
