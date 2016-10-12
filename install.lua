@@ -20,7 +20,7 @@ end
 
 local ModuleScript = {
 	new = function(Name, Parent)
-		local newScript = Instance.new("ModuleScript", Parent)
+		local newScript = Parent:FindFirstChild(Name) or Instance.new("ModuleScript", Parent)
 		newScript.Name = Name
 		newScript.Source = HttpService:GetAsync(Modules[Name])
 		return newScript
