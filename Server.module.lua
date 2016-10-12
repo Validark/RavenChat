@@ -33,17 +33,18 @@ local FireAllClients = RavenChat.FireAllClients
 local FilterStringAsync = not SoloTestMode and GameChat.FilterStringAsync or function(_, a) return a end
 
 -- Event Handlers
-local function Chatted(Chatter, Message, Pal)
+local function Chatted(Chatter, Message, Pal, TeamColor)
 	-- @param Player Chatter The player who typed the message
 	-- @param string Message What the player wishes to Chat
 	-- @param Player Pal Optional player that should receive the message
+	-- @param TeamColor Used for TeamChat
 
 	Message = FilterStringAsync(GameChat, Message, Chatter, Chatter)
 	if Pal then -- Whisper! (goose flesh invoker)
-		FireClient(RavenChat, Chatter, Pal, Message, "send")
-		FireClient(RavenChat, Pal, Chatter, Message, "recieve")
+		FireClient(RavenChat, Chatter, Pal, Message, true)
+		FireClient(RavenChat, Pal, Chatter, Message, true)
 	else
-		FireAllClients(RavenChat, Chatter, Message)
+		FireAllClients(RavenChat, Chatter, Message, false, TeamColor)
 	end
 end
 

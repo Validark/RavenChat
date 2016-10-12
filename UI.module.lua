@@ -25,6 +25,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Nevermore
 local Retrieve = require(ReplicatedStorage:WaitForChild("Nevermore"))
 
+-- Modules
+local Emoji = Retrieve:Module("Emoji")
+
 -- RemoteEvents
 local RavenChat = Retrieve:Event("RavenChat")
 
@@ -33,11 +36,13 @@ StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.Chat, false)
 local LocalPlayer = Players.LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 
--- Initialization
+-- Generate User Interface
 local Screen = Instance.new("ScreenGui")
-Screen.Name = "RavenChat"
-
 local ButtonClipper = Instance.new("Frame", Screen)
+local Button = Instance.new("TextButton", ButtonClipper)
+local TextBar = Instance.new("Frame", Screen)
+local TextBox = Instance.new("TextBox", TextBar)
+
 ButtonClipper.BackgroundTransparency = 1
 ButtonClipper.ClipsDescendants = true
 ButtonClipper.Name = "ButtonClipper"
@@ -45,7 +50,6 @@ ButtonClipper.Position = BarPosition
 ButtonClipper.Size = BarSize
 ButtonClipper.ZIndex = 9
 
-local Button = Instance.new("TextButton", ButtonClipper)
 Button.BackgroundTransparency = 1
 Button.Font = Font
 Button.FontSize = FontSize
@@ -59,7 +63,6 @@ Button.TextXAlignment = Enum.TextXAlignment.Left
 Button.TextYAlignment = Enum.TextYAlignment.Center
 Button.ZIndex = 10
 
-local TextBar = Instance.new("Frame", Screen)
 TextBar.BackgroundColor3 = Color3.new(0, 0, 0)
 TextBar.BackgroundTransparency = .5
 TextBar.BorderSizePixel = 0
@@ -68,7 +71,6 @@ TextBar.Position = ClosedTextBarPos
 TextBar.Size = BarSize
 TextBar.ZIndex = 9
 
-local TextBox = Instance.new("TextBox", TextBar)
 TextBox.BackgroundTransparency = 1
 TextBox.Font = Font
 TextBox.FontSize = FontSize
@@ -98,7 +100,6 @@ local TweenSize = ButtonClipper.TweenSize
 
 -- Module Data
 local Text = ""
-local Focused
 local Heartbeat = RunService.Heartbeat
 local yield = Heartbeat.wait
 local SwitchTexts = {
@@ -112,13 +113,13 @@ local ChatKeys = {
 }
 
 -- Event Functions
-local TextBoxRemoving
-local SlashTouched
+local Focused, TextBoxRemoving, SlashTouched
 
 local function TextChanged(Property)
 	TextBoxRemoving = TextBoxRemoving or TextBox.TextBounds == Vector2.new(0, 0) and TextBox.Text ~= "" -- TextBounds gets set before Text when Destroy()ing
 	if Property == "Text" and not TextBoxRemoving and not SlashTouched then
 		Text = TextBox.Text
+		print((gsub(Text, " ", "_")))
 	end
 	SlashTouched = false
 end
@@ -150,7 +151,7 @@ end
 
 local function Unfocus(EnterPressed)
 	Focused = false
-	if EnterPressed or Text == "" then
+	if EnterPressed or Text == "" or TextBox.Text == "" then
 		TweenPosition(TextBar, ClosedTextBarPos, "Out", AnimationEase, AnimationTime, true)
 		TweenSize(ButtonClipper, BarSize, "Out", AnimationEase, AnimationTime, true)
 	end
@@ -169,15 +170,22 @@ local function FocusLost(EnterPressed, Key)
 
 	Unfocus(true) -- Tween Elements
 
-	local PlayerName
-	local Text = gsub(gsub(gsub(TextBox.Text, "%s+", " "), "^/w (%w+)", function(Name)
+	local PlayerName, TeamColor
+
+	local function GetName(Name)
 		PlayerName = Name
 		return ""
-	end), "^%l", upper)
+	end
 
+	local Text, UseTeamColor = gsub(gsub(gsub(gsub(gsub(Text, "%s+", " "), "^/w (%w+)", GetName), "^@(%w+)", GetName), "^%%? ?%l", upper), "^%%", "")
 	Text = SwitchTexts[Text] or Text
+
+	if UseTeamColor > 0 then
+		TeamColor = LocalPlayer.TeamColor
+	end
+
 	if type(Text) == "string" then -- Send Text to Server
-		FireServer(RavenChat, Text, PlayerName)
+		FireServer(RavenChat, Text, PlayerName, TeamColor)
 	end
 end
 
@@ -195,6 +203,10 @@ local function InputBegan(InputObject, Processed)
 	end
 end
 
+Screen.Name = "RavenChat"
+Screen.Parent = PlayerGui
+print("Loaded RavenChat by Narrev")
+
 -- Connect Everything!
 TextBox.Changed:Connect(TextChanged)
 TextBox.FocusLost:Connect(FocusLost)
@@ -202,5 +214,4 @@ Screen.AncestryChanged:Connect(Regen)
 Button.MouseButton1Down:Connect(Focus)
 UserInputService.InputBegan:Connect(InputBegan)
 
-Screen.Parent = PlayerGui
-print("Loaded RavenChat by Narrev")
+return nil
