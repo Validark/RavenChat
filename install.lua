@@ -13,6 +13,7 @@ local function GetFolder(Name, Parent)
 	local Folder = Parent:FindFirstChild(Name)
 	if not Folder then
 		Folder = Instance.new("Folder", Parent)
+		Folder.Name = Name
 	end
 	return Folder
 end
