@@ -86,7 +86,7 @@ if isServer then
 	Players.PlayerAdded:Connect(PlayerAdded)
 	--[[local a = -1
 	spawn(function()
-		while wait(.01) do
+		while wait(.5) do
 			a = a + 1
 			FireAllClients(RavenChat, "Narrev", "UR DUM".. a)
 			if a > 1000 then
@@ -101,7 +101,7 @@ if isClient then
 	local StarterGui = game:GetService("StarterGui")
 	local UserInputService = game:GetService("UserInputService")
 	local Render = RunService.Heartbeat
-	local Yield = Heartbeat.Wait or wait
+	local Yield = Render.Wait or wait
 
 	-- Modules
 	local Easing = Nevermore:GetModule("Easing")
@@ -124,7 +124,7 @@ if isClient then
 
 	function Tween.new(Duration, Function, Callback)
 		local EasingFunction = Easing[Function]
-		local ElapsedTime = tick()
+		local ElapsedTime = 0
 
 		local self = setmetatable({
 			StartTime = ElapsedTime;
@@ -232,12 +232,13 @@ if isClient then
 	}
 
 	local ChatColors = {
-		Color3.fromRGB(255, 119, 119); Color3.fromRGB(167, 214, 255);
-		Color3.fromRGB(96,  255, 162); Color3.fromRGB(233, 153, 255);
-		Color3.fromRGB(255, 201, 156); Color3.fromRGB(255, 240, 160);
-		Color3.fromRGB(255, 189, 230); Color3.fromRGB(227, 216, 197);
+		Color3.fromRGB(255, 119, 119); Color3.fromRGB(131, 255, 251);
+		Color3.fromRGB(96,  255, 162); Color3.fromRGB(255, 138, 255);
+		Color3.fromRGB(255, 175, 151); Color3.fromRGB(255, 255, 150);
+		Color3.fromRGB(255, 218, 255); Color3.fromRGB(227, 216, 197);
+		Color3.fromRGB(0, 215, 136);
 
-		System = Color3.fromRGB(0, 215, 136);
+		System = Color3.fromRGB(234, 223, 204);
 	}
 
 	local ModeratorColor = Color3.fromRGB(255, 223, 94)
@@ -250,10 +251,11 @@ if isClient then
 		[16826035] = Color3.fromRGB(255, 180, 252)
 	}
 
-	function ChatColors:__index(Player)
+	function ChatColors:__index(PlayerString)
 		--- Gets a chat color and indexes it if one doesn't exist
-		if Player:IsA("Player") then
-			local userId, Name = Player.userId, Player.Name
+		local Player = Players:FindFirstChild(PlayerString)
+		if Player then
+			local userId, Name = Player.UserId, Player.Name
 
 			for id, Color in next, CustomColors do
 				if id == userId then
@@ -281,8 +283,10 @@ if isClient then
 			end
 
 			local Color = self[userId % #ChatColors + 1]
-			self[Player] = Color
+			self[PlayerString] = Color
 			return Color
+		else
+			return self[math.random(1, #ChatColors)]
 		end
 	end
 
@@ -381,7 +385,7 @@ if isClient then
 		end
 	end
 
-	local MessageYOffset = 0
+	local MessageYOffset = 140
 	local Tweenable = true
 	local FadeTime = .25
 	local MessageNumber = 0
@@ -401,7 +405,7 @@ if isClient then
 		NameText.Position = UDim2.new(0, 0, 0, MessageYOffset)
 		NameText.Size = UDim2.new(1, 0, 0, 20)
 		NameText.Text = Chatter
-		NameText.TextColor3 = ChatColors[Player] --Color3.new(0, 1, 213/255)
+		NameText.TextColor3 = ChatColors[Chatter] --Color3.new(0, 1, 213/255)
 		NameText.TextSize = FontSize
 		NameText.TextStrokeTransparency = 0.5
 		NameText.TextXAlignment = Enum.TextXAlignment.Left
@@ -409,7 +413,7 @@ if isClient then
 		local MessageText = Instance.new("TextLabel", NameText)
 		MessageText.BackgroundTransparency = 1
 		MessageText.Font = Font
-		MessageText.Position = UDim2.new(0, NameText.TextBounds.X + 4, 0, 0)
+		MessageText.Position = UDim2.new(0, NameText.TextBounds.X, 0, 0)
 		MessageText.Size = UDim2.new(0, 0, 0, 20)
 		MessageText.Text = Message
 		MessageText.TextColor3 = Color3.new(1, 1, 1)
@@ -418,14 +422,16 @@ if isClient then
 		MessageText.TextXAlignment = Enum.TextXAlignment.Left
 
 
-		if MessageYOffset > 139 then
-			if Tweenable then
-				local previous = 0
-				Tween.new(FadeTime, "OutQuad", function(ratio)
-					Scroller.CanvasPosition = Scroller.CanvasPosition + Vector2.new(0, (previous - ratio) * 20)
-					previous = ratio
-				end)
-			end
+		if Tweenable then
+			local StartPosition = Scroller.CanvasPosition
+			local CanvasPositionY = StartPosition.Y
+			local Accumulated = Vector2.new(0, 0)
+
+			Tween.new(FadeTime, "OutQuad", function(ratio)
+				local Change = Vector2.new(0, CanvasPositionY + ratio*20) - StartPosition
+				Scroller.CanvasPosition = Scroller.CanvasPosition + Change - Accumulated
+				Accumulated = Change
+			end)
 		end
 
 		MessageYOffset = MessageYOffset + 20
@@ -444,7 +450,7 @@ if isClient then
 	RavenChat.OnClientEvent:Connect(MessageDisplay)
 	Players.PlayerRemoving:Connect(function(Player)
 		wait(10) -- Just chill to make sure that any of their messages have finished sending
-		ChatColors[Player] = nil
+		ChatColors[Player.Name] = nil
 	end)
 	-- Connect Everything!
 	TextBox.Changed:Connect(TextChanged)
